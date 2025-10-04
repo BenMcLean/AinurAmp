@@ -1,0 +1,14 @@
+{
+	"version": "3.0",
+	"defaultProvider": "jsdelivr",
+	"libraries": [
+		{
+			"library": "bootstra.386-cdn@4.4.1",
+			"destination": "wwwroot/lib/bootstra386"
+		},
+		{
+			"library": "jquery@3.7.1",
+			"destination": "wwwroot/lib/jquery"
+		}
+	]
+}
