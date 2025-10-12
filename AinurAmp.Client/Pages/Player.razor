@@ -1,0 +1,28 @@
+@page "/player"
+@rendermode InteractiveAuto
+@inject IJSRuntime JS
+
+<PageTitle>FLAC Player</PageTitle>
+
+<h1>FLAC Streaming Test</h1>
+
+<button @onclick="PlayTrack">Play</button>
+<button @onclick="PauseTrack">Pause</button>
+<button @onclick="StopTrack">Stop</button>
+
+@code {
+	private async Task PlayTrack()
+	{
+		await JS.InvokeVoidAsync("audioPlayer.playFlac", "Jim's Big Ego - Mix Tape.flac");
+	}
+
+	private async Task PauseTrack()
+	{
+		await JS.InvokeVoidAsync("audioPlayer.pause");
+	}
+
+	private async Task StopTrack()
+	{
+		await JS.InvokeVoidAsync("audioPlayer.stop");
+	}
+}

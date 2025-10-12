@@ -836,3 +836,5 @@ solution-config.props
 !**/Properties/PublishProfiles/*.pubxml
 # Ignore LibMan packages in the main project only
 AinurAmp/wwwroot/lib/
+# Ignore sample music
+Music/

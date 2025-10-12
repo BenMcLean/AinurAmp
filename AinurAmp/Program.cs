@@ -1,36 +1,39 @@
-using AinurAmp.Client.Pages;
 using AinurAmp.Components;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+namespace AinurAmp;
 
-// Add services to the container.
-builder.Services.AddRazorComponents()
-	.AddInteractiveServerComponents()
-	.AddInteractiveWebAssemblyComponents();
-
-WebApplication app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+internal class Program
 {
-	app.UseWebAssemblyDebugging();
+	private static void Main(string[] args)
+	{
+		WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+		builder.Services.AddRazorComponents()
+			.AddInteractiveServerComponents()
+			.AddInteractiveWebAssemblyComponents();
+		WebApplication app = builder.Build();
+		app.MapGet("/api/audio/{trackId}", async (string trackId, HttpContext context) =>
+		{
+			string flacPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Music", $"{trackId}");
+			if (!File.Exists(flacPath))
+				return Results.NotFound();
+			FileStream fileStream = File.OpenRead(flacPath);
+			context.Response.Headers.AcceptRanges = "bytes";
+			return Results.Stream(fileStream, "audio/flac", enableRangeProcessing: true);
+		});
+		if (app.Environment.IsDevelopment())
+			app.UseWebAssemblyDebugging();
+		else
+		{
+			app.UseExceptionHandler("/Error", createScopeForErrors: true);
+			app.UseHsts();
+		}
+		app.UseHttpsRedirection();
+		app.UseAntiforgery();
+		app.MapStaticAssets();
+		app.MapRazorComponents<App>()
+			.AddInteractiveServerRenderMode()
+			.AddInteractiveWebAssemblyRenderMode()
+			.AddAdditionalAssemblies(typeof(AinurAmp.Client._Imports).Assembly);
+		app.Run();
+	}
 }
-else
-{
-	app.UseExceptionHandler("/Error", createScopeForErrors: true);
-	// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-	app.UseHsts();
-}
-
-app.UseHttpsRedirection();
-
-
-app.UseAntiforgery();
-
-app.MapStaticAssets();
-app.MapRazorComponents<App>()
-	.AddInteractiveServerRenderMode()
-	.AddInteractiveWebAssemblyRenderMode()
-	.AddAdditionalAssemblies(typeof(AinurAmp.Client._Imports).Assembly);
-
-app.Run();
