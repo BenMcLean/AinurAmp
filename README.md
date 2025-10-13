@@ -128,6 +128,11 @@ AinurAmp is music streaming for people who hate music streaming and still buy (a
 ## Setup Instructions
 **It is very early days on this project so it is not ready for public consumption.**
 
+### Prerequisites
+
+- .NET 9.0 SDK
+- Node.js (v18 or later) and npm
+
 ### 1. Clone the repository
 
 ```bash
@@ -141,24 +146,74 @@ cd AinurAmp
 dotnet tool install -g Microsoft.Web.LibraryManager.Cli
 ```
 
-### 3. Restore client-side libraries
+### 3. Navigate to the main project folder
 
 ```bash
 cd AinurAmp
+```
+
+### 4. Restore client-side libraries
+
+```bash
 libman restore
 ```
 
-This will download all client-side dependencies (BOOTSTRA.386, jQuery, Bootstrap 4) defined in `libman.json` to the `wwwroot/lib/` folder.
+This downloads all client-side dependencies (BOOTSTRA.386, jQuery) defined in `libman.json` to `wwwroot/lib/`.
 
-### 4. Run the application
+### 5. Install npm dependencies
 
 ```bash
-dotnet run
+npm install
+```
+
+This installs TypeScript dependencies (Howler.js, esbuild, type definitions) defined in `package.json`.
+
+### 6. Build the project
+
+```bash
+cd ..
+dotnet build
+```
+
+The build process automatically:
+- Compiles TypeScript files using esbuild
+- Bundles npm modules
+- Outputs JavaScript to `wwwroot/js/`
+
+### 7. Run the application
+
+```bash
+dotnet run --project AinurAmp
 ```
 
 Navigate to `https://localhost:[port]` (check console output for the actual port).
 
 ## Development Notes
-- Client-side libraries are managed via LibMan and are **not** committed to source control
-- Always run `libman restore` after cloning or pulling changes to `libman.json`
-- To update a library: `libman update [library-name]@[version]`
+
+### Client-side Dependencies
+- **LibMan** manages CSS/JS libraries (Bootstrap theme, jQuery) - not committed to source control
+- **npm** manages TypeScript/JavaScript modules (Howler.js) - `node_modules/` not committed to source control
+- **esbuild** bundles TypeScript and npm modules during build - outputs not committed to source control
+- Always run both `libman restore` and `npm install` after cloning or pulling dependency changes
+
+### TypeScript Development
+- TypeScript source files are in `AinurAmp/TypeScript/`
+- Compiled/bundled JavaScript outputs to `AinurAmp/wwwroot/js/`
+- TypeScript compilation happens automatically during `dotnet build`
+- Changes to `.ts` files require a rebuild to take effect
+
+### Updating Dependencies
+- Update LibMan libraries: `libman update [library-name]@[version]`
+- Update npm packages: `npm update` or edit `package.json` and run `npm install`
+
+## Docker Considerations
+
+The build process is designed to work in Docker containers:
+- All dependencies are restored via standard CLI tools (`dotnet`, `libman`, `npm`)
+- No IDE-specific requirements
+- Build output is self-contained in `wwwroot/`
+
+For production Docker builds, your Dockerfile should include:
+1. Node.js (for npm and esbuild)
+2. .NET SDK (includes LibMan capability)
+3. Run `libman restore` and `npm install` before `dotnet build`

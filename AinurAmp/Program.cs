@@ -11,7 +11,7 @@ internal class Program
 			.AddInteractiveServerComponents()
 			.AddInteractiveWebAssemblyComponents();
 		WebApplication app = builder.Build();
-		app.MapGet("/api/audio/{trackId}", async (string trackId, HttpContext context) =>
+		app.MapGet("/api/audio/{trackId}", (string trackId, HttpContext context) =>
 		{
 			string flacPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Music", $"{trackId}");
 			if (!File.Exists(flacPath))
