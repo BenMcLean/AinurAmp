@@ -6,7 +6,9 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\AinurAmp.Client\AinurAmp.Client.csproj" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.9" />
+		<PackageReference Include="CueSharp" Version="1.0.1" />
+		<PackageReference Include="FFMpegSharp" Version="2.1.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.10" />
 	</ItemGroup>
 	<Target Name="BundleTypeScript" BeforeTargets="BeforeBuild;ResolveStaticWebAssetsInputs">
 		<Exec Command="npx esbuild TypeScript/**/*.ts --bundle --outbase=TypeScript --outdir=wwwroot/js --sourcemap" />
