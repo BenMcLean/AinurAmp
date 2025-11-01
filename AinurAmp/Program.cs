@@ -73,11 +73,13 @@ internal class Program
 			return Results.Ok(files);
 		});
 
-		app.MapGet("/api/audio/{trackId}", (string trackId, HttpContext context) =>
+		app.MapGet("/api/audio/{**trackId}", (string trackId, HttpContext context) =>
 		{
-			string flacPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Music", $"{trackId}");
-			if (!File.Exists(flacPath))
+			string flacPath = Path.GetFullPath(Path.Combine(musicRootPath, trackId));
+
+			if (!IsPathSafe(flacPath, musicRootPath) || !File.Exists(flacPath))
 				return Results.NotFound();
+
 			FileStream fileStream = File.OpenRead(flacPath);
 			context.Response.Headers.AcceptRanges = "bytes";
 			return Results.Stream(fileStream, "audio/flac", enableRangeProcessing: true);
