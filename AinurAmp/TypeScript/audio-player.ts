@@ -3,6 +3,7 @@ import { Howl, HowlOptions } from 'howler';
 interface AudioPlayer {
 	currentSound: Howl | null;
 	playFlac(trackId: string): void;
+	play(): void;
 	pause(): void;
 	stop(): void;
 	seek(seconds: number): void;
@@ -41,6 +42,12 @@ const audioPlayer: AudioPlayer = {
 
 		this.currentSound = new Howl(options);
 		this.currentSound.play();
+	},
+
+	play(): void {
+		if (this.currentSound) {
+			this.currentSound.play();
+		}
 	},
 
 	pause(): void {

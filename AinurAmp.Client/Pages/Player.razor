@@ -1,19 +1,174 @@
 @page "/player"
 @rendermode InteractiveAuto
 @inject IJSRuntime JS
+@inject HttpClient Http
 
-<PageTitle>FLAC Player</PageTitle>
+<PageTitle>AinurAmp</PageTitle>
 
-<h1>FLAC Streaming Test</h1>
+<div class="container-fluid">
+	<div class="page-header">
+		<h1>AinurAmp</h1>
+	</div>
 
-<button @onclick="PlayTrack" class="btn btn-primary btn-large">Play</button>
-<button @onclick="PauseTrack" class="btn btn-primary btn-large">Pause</button>
-<button @onclick="StopTrack" class="btn btn-primary btn-large">Stop</button>
+	<div class="triple-pane">
+		<!-- Column A: Player & Playlist -->
+		<div class="pane-player">
+			<div class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title">Player</h3>
+				</div>
+				<div class="panel-body">
+					<div class="well well-sm">
+						@if (!string.IsNullOrEmpty(currentTrack))
+						{
+							<strong>@currentTrack</strong>
+						}
+						else
+						{
+							<em>No track loaded</em>
+						}
+					</div>
+					<div class="btn-group btn-group-justified" role="group">
+						<div class="btn-group" role="group">
+							<button @onclick="PlayTrack" class="btn btn-success">Play</button>
+						</div>
+						<div class="btn-group" role="group">
+							<button @onclick="PauseTrack" class="btn btn-warning">Pause</button>
+						</div>
+						<div class="btn-group" role="group">
+							<button @onclick="StopTrack" class="btn btn-danger">Stop</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-info">
+				<div class="panel-heading">
+					<h3 class="panel-title">Playlist</h3>
+				</div>
+				<div class="panel-body pane-content">
+					<ul class="list-group">
+						@if (currentTrack != null)
+						{
+							<li class="list-group-item active">@currentTrack</li>
+						}
+						else
+						{
+							<li class="list-group-item"><em>No items in playlist</em></li>
+						}
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<!-- Column B: Folder Navigation -->
+		<div class="pane-folders">
+			<div class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title">Folders</h3>
+				</div>
+				<div class="panel-body pane-content">
+					<ul class="list-group">
+						@if (currentPath != "")
+						{
+							<li class="list-group-item folder-item" @onclick="() => NavigateUp()">
+								<span class="glyphicon glyphicon-arrow-up"></span> [..]
+							</li>
+						}
+						@foreach (var directory in directories)
+						{
+							<li class="list-group-item folder-item" @onclick="() => NavigateToFolder(directory.Path)">
+								<span class="glyphicon glyphicon-folder-close"></span> @directory.Name
+							</li>
+						}
+						@if (!directories.Any())
+						{
+							<li class="list-group-item"><em>No subdirectories</em></li>
+						}
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<!-- Column C: Files -->
+		<div class="pane-files">
+			<div class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title">Files: @(string.IsNullOrEmpty(currentPath) ? "/" : currentPath)</h3>
+				</div>
+				<div class="panel-body pane-content">
+					<ul class="list-group">
+						@foreach (var file in files)
+						{
+							<li class="list-group-item file-item" @onclick="() => PlayFile(file.Path)">
+								<span class="glyphicon glyphicon-music"></span> @file.Name
+							</li>
+						}
+						@if (!files.Any())
+						{
+							<li class="list-group-item"><em>No audio files</em></li>
+						}
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 
 @code {
+	private string currentTrack = string.Empty;
+	private string currentPath = string.Empty;
+	private List<DirectoryItem> directories = new();
+	private List<FileItem> files = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadDirectory(currentPath);
+	}
+
+	private async Task LoadDirectory(string path)
+	{
+		try
+		{
+			var dirUrl = string.IsNullOrEmpty(path)
+				? "/api/browse/directories"
+				: $"/api/browse/directories?path={Uri.EscapeDataString(path)}";
+			var fileUrl = string.IsNullOrEmpty(path)
+				? "/api/browse/files"
+				: $"/api/browse/files?path={Uri.EscapeDataString(path)}";
+
+			directories = await Http.GetFromJsonAsync<List<DirectoryItem>>(dirUrl) ?? new();
+			files = await Http.GetFromJsonAsync<List<FileItem>>(fileUrl) ?? new();
+			currentPath = path;
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error loading directory: {ex.Message}");
+		}
+	}
+
+	private async Task NavigateToFolder(string path)
+	{
+		await LoadDirectory(path);
+	}
+
+	private async Task NavigateUp()
+	{
+		if (string.IsNullOrEmpty(currentPath)) return;
+
+		var parentPath = Path.GetDirectoryName(currentPath)?.Replace("\\", "/") ?? "";
+		await LoadDirectory(parentPath);
+	}
+
+	private async Task PlayFile(string path)
+	{
+		currentTrack = Path.GetFileName(path);
+		await JS.InvokeVoidAsync("audioPlayer.playFlac", path);
+	}
+
 	private async Task PlayTrack()
 	{
-		await JS.InvokeVoidAsync("audioPlayer.playFlac", "Jim's Big Ego - Mix Tape.flac");
+		await JS.InvokeVoidAsync("audioPlayer.play");
 	}
 
 	private async Task PauseTrack()
@@ -23,6 +178,19 @@
 
 	private async Task StopTrack()
 	{
+		currentTrack = string.Empty;
 		await JS.InvokeVoidAsync("audioPlayer.stop");
+	}
+
+	public class DirectoryItem
+	{
+		public string Name { get; set; } = string.Empty;
+		public string Path { get; set; } = string.Empty;
+	}
+
+	public class FileItem
+	{
+		public string Name { get; set; } = string.Empty;
+		public string Path { get; set; } = string.Empty;
 	}
 }

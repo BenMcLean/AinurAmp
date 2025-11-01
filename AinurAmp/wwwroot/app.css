@@ -40,3 +40,54 @@
 		right: 0.75rem;
 		top: 0.5rem;
 	}
+
+/* Minimal custom styling for triple-pane layout */
+.triple-pane {
+	display: flex;
+	height: calc(100vh - 200px);
+	gap: 10px;
+}
+
+.pane-player {
+	flex: 0 0 300px;
+}
+
+.pane-folders {
+	flex: 1;
+	min-width: 200px;
+}
+
+.pane-files {
+	flex: 2;
+	min-width: 300px;
+}
+
+.pane-content {
+	max-height: 70vh;
+	overflow-y: auto;
+}
+
+.folder-item,
+.file-item {
+	cursor: pointer;
+	padding: 4px 8px;
+}
+
+.folder-item:hover,
+.file-item:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+	.triple-pane {
+		flex-direction: column;
+		height: auto;
+	}
+
+	.pane-player,
+	.pane-folders,
+	.pane-files {
+		flex: none;
+		min-width: unset;
+	}
+}
